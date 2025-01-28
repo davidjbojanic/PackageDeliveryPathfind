@@ -1,3 +1,5 @@
+# 011204547
+
 # Import necessary libraries and modules
 from datetime import datetime
 from Hub import Hub
@@ -119,7 +121,7 @@ while True:
             package_id = input('Enter package ID: ') # Prompt user to enter package ID
             try:
                 # Check if the package ID exists in the Hub, raise error if not found
-                if not h.get_key(package_id):
+                if not h.contains(package_id):
                     raise ValueError("Package ID not found.")
 
                 print("")

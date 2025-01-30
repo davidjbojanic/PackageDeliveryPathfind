@@ -99,8 +99,11 @@ while True:
         if answer == '1':
             print("")
             print(f"--------Status of all packages at {time}---------") # Print the status header
+            print(f"Truck 1 - departure {truck1.departure_time.time()}")
             truck1.print_package_status(parsed_datetime) # Print the statuses of all packages for Truck 1 based on user selected time
+            print(f"Truck 2 - departure {truck2.departure_time.time()}")
             truck2.print_package_status(parsed_datetime) # Print the statuses of all packages for Truck 2 based on user selected time
+            print(f"Truck 3 - departure {truck3.departure_time.time()}")
             truck3.print_package_status(parsed_datetime) # Print the statuses of all packages for Truck 3 based on user selected time
 
             # Calculate and print the combined total mileage traveled for all trucks up to the user selected time

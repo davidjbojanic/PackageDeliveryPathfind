@@ -61,7 +61,8 @@ class Truck:
                     print(f"id: {package}, address: {value[0]}, return: {value[1]}")
             else:
                 if user_package == h.contains(package): # Print one user selected package
-                    print(f"id: {h.get(package).id}, address: {h.get(package).address}, status: {h.get(package).status}, dropoff: {h.get(package).dropoff}")
+                    print(h.get(package))
+
 
     # Method to calculate total miles by truck up to 'user_time'
     def mileage_calculator(self, user_time):

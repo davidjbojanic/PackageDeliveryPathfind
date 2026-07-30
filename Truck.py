@@ -1,6 +1,7 @@
 from Distance import Graph
 from datetime import datetime, timedelta
 from Hub import Hub
+import display
 
 # Create an instance of a Hub
 h = Hub()
@@ -52,16 +53,34 @@ class Truck:
                 p.dropoff = "NA"
 
         # Print statuses
-        for package in self.package_details.keys():
-            if user_package is None:
+        if user_package is None:
+            rows = []
+            for package in self.package_details.keys():
                 if h.get(package) is not None:
-                    print(f"id: {h.get(package).id}, address: {h.get(package).address}, status: {h.get(package).status}, dropoff: {h.get(package).dropoff}")
+                    p = h.get(package)
+                    display_address = "300 State St" if (package == "9" and time < datetime(2025, 1, 24, 10, 20)) else p.address
+                    rows.append([
+                        p.id,
+                        display_address,
+                        display.status_badge(p.status),
+                        display.format_time(p.delivery_deadline),
+                        display.format_time(p.dropoff),
+                    ])
                 elif package == "HUB" and hub_return: # Handle return to the hub
                     value = self.package_details.get(package)
-                    print(f"id: {package}, address: {value[0]}, return: {value[1]}")
-            else:
+                    rows.append(["HUB", value[0], display.color("↩ returned", display.MAGENTA), "—", display.format_time(value[1])])
+            display.print_table(["ID", "Address", "Status", "Deadline", "Dropoff"], rows)
+
+        else:
+            for package in self.package_details.keys():
                 if user_package == h.contains(package): # Print one user selected package
-                    print(h.get(package))
+                    if package == "9" and time < datetime(2025, 1, 24, 10, 20):
+                        original_package = h.get("9")
+                        temp_package = original_package.copy()
+                        temp_package.address = "300 State St"
+                        display.print_package_panel(temp_package)
+                    else:
+                        display.print_package_panel(h.get(package))
 
 
     # Method to calculate total miles by truck up to 'user_time'

@@ -1,162 +1,154 @@
-## Data Structures and Algorithms II – C950
+# Salt Lake City Parcel Router
 
+A command-line delivery routing simulator: it loads a day's worth of packages, assigns them across three trucks, calculates the most efficient delivery route for each truck using a nearest-neighbor algorithm, and lets you check the real-time status of any package (or the whole fleet) at any point in the day.
 
-## INTRODUCTION
+## The story
 
-```text
-For this assessment, you will apply the algorithms and data structures you studied in this course to solve a real programming problem. You will implement an algorithm to route
-delivery trucks that will allow you to meet all delivery deadlines while traveling the least number of miles. You will also describe and justify the decisions you made while creating
-this program.
+It's 7:45 a.m. at a small Salt Lake City parcel depot. Three trucks, two drivers, and forty packages that all need to be somewhere by end of day — some by 9:00 a.m., some by 10:30, a few whenever, and one with an address that's flat-out wrong until a corrected one comes in at 10:20.
 
-The skills you showcase in your completed project may be useful in responding to technical interview questions for future employment. This project may also be added to your
-portfolio to show to future employers.
+The dispatcher's problem: figure out which packages go on which truck, in what order, so that every deadline is hit while the trucks collectively drive as few miles as possible. Do it wrong and a client's shipment shows up four hours late. Do it right and you've saved gas, driver hours, and a phone call from an angry customer.
+
+This program is that dispatcher's solution — a self-contained routing engine (custom hash table, graph-based distance lookup, and a nearest-neighbor route builder) with a CLI dashboard that lets you rewind the day and see exactly where every package was, and every truck had driven, at any given minute.
+
+## Features
+
+- **Custom hash table** for package storage and lookup (no built-in dict used under the hood)
+- **Graph-based distance model** loaded from a real distance matrix between delivery addresses
+- **Nearest-neighbor routing** to minimize total miles driven per truck
+- **Time-travel package lookup** — check the status of one package, or the entire fleet, as of any time of day
+- **Live mileage totals**, correctly excluding miles not yet driven at the selected time
+- **Clean terminal UI** — colored status badges, boxed tables, and package detail panels (no extra installs required)
+
+## Requirements
+
+- Python 3.9 or later
+- No third-party packages — everything runs on the standard library
+
+## Getting started
+
+```bash
+# Clone the repo
+git clone https://github.com/<your-username>/<your-repo>.git
+cd <your-repo>
+
+# Run it — no pip install needed
+python3 main.py
 ```
 
-## SCENARIO
+That's it. The program loads the package and distance data from the `data/` folder automatically and dispatches all three trucks the moment it starts.
 
-```text
-The Western Governors University Parcel Service (WGUPS) needs to determine the best route and delivery distribution for their Daily Local Deliveries (DLD) because packages
-are not currently being consistently delivered by their promised deadline. The Salt Lake City DLD route has three trucks, two drivers, and an average of 40 packages to deliver
-each day; each package has specific criteria and delivery requirements.
+> **Note:** Run it from the project's root folder (the one containing `main.py`), since it loads its CSV data using relative paths.
 
-Your task is to determine the best algorithm, write code, and present a solution where all 40 packages, listed in the attached “WGUPS Package File,” will be delivered on time
-with the least number of miles added to the combined mileage total of all trucks. The specific delivery locations are shown on the attached “Salt Lake City Downtown Map” and
-distances to each location are given in the attached “WGUPS Distance Table.”
+## How to use it
 
-While you work on this assessment, take into consideration the specific delivery time expected for each package and the possibility that the delivery requirements—including the
-expected delivery time—can be changed by management at any time and at any point along the chosen route. In addition, you should keep in mind that the supervisor should be
-able to see, at assigned points, the progress of each truck and its packages by any of the variables listed in the “WGUPS Package File,” including what
-has been delivered and what time the delivery occurred.
+When you start the program, all three trucks are automatically loaded and dispatched:
 
-The intent is to use this solution (program) for this specific location and to use the same program in many cities in each state where WGU has a presence. As such, you will need to
-include detailed comments, following the industry-standard Python style guide, to make your code easy to read and to justify the decisions you made while writing your program.
+```
+╔══════════════════════════════════════════════════════════════╗
+║                     WGUPS ROUTING SYSTEM                     ║
+║             Salt Lake City Daily Local Delivery              ║
+╚══════════════════════════════════════════════════════════════╝
+
+Enter a time (e.g. 09:30) or q to quit:
 ```
 
-#### Assumptions
+**Step 1 — Enter a time.** Type any time in `HH:MM` (24-hour) format to "rewind" the day to that moment, e.g. `09:30`. Type `q` at any point to exit.
 
-- Each truck can carry a maximum of 16 packages.
-- Trucks travel at an average speed of 18 miles per hour.
-- Trucks have a “infinite amount of gas” with no need to stop.
-- Each driver stays with the same truck as long as that truck is in service.
-- Drivers leave the hub at 8:00 a.m., with the truck loaded, and can return to the hub for packages if needed. The day ends when all 40 packages have been delivered.
-- Delivery time is instantaneous, i.e., no time passes while at a delivery (that time is factored into the average speed of the trucks).
-- There is up to one special note for each package.
-- The wrong delivery address for package #9, Third District Juvenile Court, will be corrected at 10:20 a.m. The correct address is 410 S State St., Salt Lake City, UT 84111.
-- The package ID is unique; there are no collisions.
-- No further assumptions exist or are allowed.
+**Step 2 — Pick an action:**
 
-## REQUIREMENTS
+```
+  1  View all packages at selected time
+  2  View one package at selected time
+  3  Exit the program
+```
 
-```text
-Your submission must be your original work. No more than a combined total of 30% of the submission and no more than a 10% match to any one individual source can be directly
-quoted or closely paraphrased from sources, even if cited correctly. An originality report is provided when you submit your task that can be used as a guide.
+### Option 1: View the whole fleet
 
-You must use the rubric to direct the creation of your submission because it provides detailed criteria that will be used to evaluate your work. Each requirement below may be
-evaluated by more than one rubric aspect. The rubric aspect titles may contain hyperlinks to relevant portions of the course.
+Shows every package on every truck, its current status (`delivered`, `en route`, or `at the hub`), its deadline, and its drop-off time if delivered — followed by the combined mileage driven by all three trucks up to that point.
 
-Section 1: Programming/Coding
+```
+── Status of all packages at 09:30 ─────────────────────────────
+Truck 1 — departure 8:00 AM
+┌────┬────────────────────────────────────────┬─────────────┬──────────┬─────────┐
+│ ID │ Address                                │ Status      │ Deadline │ Dropoff │
+├────┼────────────────────────────────────────┼─────────────┼──────────┼─────────┤
+│ 14 │ 4300 S 1300 E                          │ ● delivered │ 10:30 AM │ 8:06 AM │
+│ 15 │ 4580 S 2300 E                          │ ● delivered │ 9:00 AM  │ 8:13 AM │
+│ 37 │ 410 S State St                         │ ● en route  │ 10:30 AM │ NA      │
+│ 11 │ 2600 Taylorsville Blvd                 │ ● en route  │ 5:00 PM  │ NA      │
+└────┴────────────────────────────────────────┴─────────────┴──────────┴─────────┘
 
+Truck 2 — departure 9:05 AM
+┌────┬──────────────────────────┬─────────────┬──────────┬─────────┐
+│ ID │ Address                  │ Status      │ Deadline │ Dropoff │
+├────┼──────────────────────────┼─────────────┼──────────┼─────────┤
+│ 25 │ 5383 South 900 East #104 │ ● delivered │ 10:30 AM │ 9:13 AM │
+│ 28 │ 2835 Main St             │ ● en route  │ 5:00 PM  │ NA      │
+└────┴──────────────────────────┴─────────────┴──────────┴─────────┘
 
-    A. Identify the algorithm that will be used to create a program to deliver the packages and meets all  requirements specified in the scenario.
+Truck 3 — departure 10:40 AM
+┌────┬─────────────────┬──────────────┬──────────┬─────────┐
+│ ID │ Address         │ Status       │ Deadline │ Dropoff │
+├────┼─────────────────┼──────────────┼──────────┼─────────┤
+│ 9  │ 300 State St    │ ● at the hub │ 5:00 PM  │ NA      │
+└────┴─────────────────┴──────────────┴──────────┴─────────┘
 
-    B.  Write a core algorithm overview, using the sample given, in which you do the following:
+┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Total mileage: 29.9 mi ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+```
 
-        1.  Comment using pseudocode to show the logic of the algorithm applied to this software solution.
+*(Full output includes all packages per truck — trimmed here for readability.)*
 
-        2.  Apply programming models to the scenario.
+### Option 2: Look up a single package
 
-        3.  Evaluate space-time complexity using Big O notation throughout the coding and for the entire program.
+Enter a package ID (1–40) to see just that package's full detail card:
 
-        4.  Discuss the ability of your solution to adapt to a changing market and to scalability.
+```
+── Status of package ID#9 at 09:10 ─────────────────────────────
+┌──────────────────────────┐
+│ ID:       9              │
+│ Address:  300 State St   │
+│ City:     Salt Lake City │
+│ Zip:      84103          │
+│ Deadline: 5:00 PM        │
+│ Weight:   2              │
+│ Status:   ● at the hub   │
+│ Dropoff:  None           │
+└──────────────────────────┘
+```
 
-        5.  Discuss the efficiency and maintainability of the software.
+> Fun detail: try looking up package #9 before and after 10:20 a.m. — its address is intentionally wrong until a correction comes in mid-morning, exactly like a real dispatch correction would.
 
-        6.  Discuss the self-adjusting data structures chosen and their strengths and weaknesses based on the scenario.
+### Option 3: Exit
 
-    C.  Write an original code to solve and to meet the requirements of lowest mileage usage and having all  packages delivered on time.
+Ends the program.
 
-        1.  Create a comment within the first line of your code that includes your first name, last name, and student ID.
+## Project structure
 
-        2.  Include comments at each  block of code to explain the process and flow of the coding.
+```
+.
+├── main.py       # Entry point — loads data, dispatches trucks, runs the CLI loop
+├── Truck.py      # Truck class: package loading, route calculation, status/mileage lookups
+├── Hub.py        # Loads package data from CSV into the hash table
+├── HashMap.py    # Custom hash table (chaining, auto-resize) used for package storage
+├── Package.py    # Package data model
+├── Distance.py   # Graph model + distance matrix loader
+├── display.py    # Terminal UI helpers (colors, tables, panels) — presentation only
+└── data/
+    ├── WGUPS Package File.csv      # The day's package manifest
+    ├── WGUPS Location list.csv     # Delivery addresses
+    └── WGUPS Distance Table.csv    # Distance matrix between addresses
+```
 
-    D.  Identify a data structure that can be used with your chosen algorithm to store the package data.
+## How the routing works, briefly
 
-        1.  Explain how your data structure includes the relationship between the data points you are storing.
+1. **Load phase** — packages are read from CSV into a custom hash table (`HashMap.py`) keyed by package ID; delivery addresses are read into a graph (`Distance.py`) where edges are distances between locations.
+2. **Assignment** — each truck is manually loaded with a subset of packages (grouped to respect deadlines, delivery constraints, and truck capacity).
+3. **Routing** — each truck runs a nearest-neighbor algorithm: starting at the hub, it repeatedly travels to whichever remaining stop is closest, until all its packages are delivered.
+4. **Timing** — delivery time for each stop is calculated from cumulative distance and a fixed truck speed, giving every package a computed drop-off time.
+5. **Status lookup** — at any queried time, a package's status is derived by comparing that time against its computed drop-off time and its truck's departure time.
 
-        Note: Do NOT use any existing data structures. You must design, write, implement, and debug all code that you turn in for this assessment. Code downloaded from the internet or acquired from another student or any other source may not be submitted and will result in automatic failure of this assessment.
+## License
 
-    E.  Develop a hash table, without using any additional libraries or classes, with an insertion function that takes the following components as input and inserts the components into the hash table:
-
-        •  package ID number
-
-        •  delivery address
-
-        •  delivery deadline
-
-        •  delivery city
-
-        •  delivery zip code
-
-        •  package weight
-
-        •  delivery status (e.g., delivered, in route)
-
-    F.  Develop a look-up function that takes the following components as input and returns the corresponding data elements:
-
-        •  package ID number
-
-        •  delivery address
-
-        •  delivery deadline
-
-        •  delivery city
-
-        •  delivery zip code
-
-        •  package weight
-
-        •  delivery status (e.g., delivered, in route)
-
-    G.  Provide an interface for the insert and look-up functions to view the status of any package at any time. This function should return all information about each package, including delivery status.
-
-        1.  Provide screenshots to show package status of all packages at a time between 8:35 a.m. and 9:25 a.m.
-
-        2.  Provide screenshots to show package status of all packages at a time between 9:35 a.m. and 10:25 a.m.
-
-        3.  Provide screenshots to show package status of all packages at a time between 12:03 p.m. and 1:12 p.m.
-
-    H.  Run your code and provide screenshots to capture the complete execution of your code.
-
-
-Section 2: Annotations
-
-
-    I.  Justify your choice of algorithm by doing the following:
-
-        1.  Describe at least  two strengths of the algorithm you chose.
-
-        2.  Verify that the algorithm you chose meets all  the criteria and requirements given in the scenario.
-
-        3.  Identify two other algorithms that could be used and would have met the criteria and requirements given in the scenario.
-
-            a.  Describe how each  algorithm identified in part I3 is different from the algorithm you chose to use in the solution.
-
-    J.  Describe what you would do differently if you did this project again.
-
-    K.  Justify your choice of data structure by doing the following:
-
-        1.  Verify that the data structure you chose meets all  the criteria and requirements given in the scenario.
-
-            a.  Describe the efficiency of the data structure chosen.
-
-            b.  Explain the expected overhead when linking to the next data item.
-
-            c.  Describe the implications of when more package data is added to the system or other changes in scale occur.
-
-        2.  Identify two other data structures that can meet the same criteria and requirements given in the scenario.
-
-            a.  Describe how each  data structure identified in part K2 is different from the data structure you chose to use in the solution.
-
-    L.   Acknowledge sources, using in-text citations and references, for content that is quoted, paraphrased, or summarized.
-
-    M.  Demonstrate professional communication in the content and presentation of your submission.
+Feel free to fork, adapt, or build on this for your own portfolio.

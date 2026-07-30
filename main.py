@@ -5,6 +5,7 @@ from datetime import datetime
 from Hub import Hub
 from Distance import*
 from Truck import Truck
+import display
 
 # Instantiate a Graph object and load locations and distances
 g = Graph()
@@ -70,17 +71,21 @@ truck3.route_calculator() # Calculate the optimal delivery route for Truck 3
 # Set a default date for input validation
 default_date = "2025-1-24"
 
+# Display a welcome banner
+display.banner("WGUPS ROUTING SYSTEM", "Salt Lake City Daily Local Delivery")
+
 # Start an interactive loop to accept user input and show delivery status
 while True:
-    time = input('Enter a time (ie. HH:MM): ') # Prompt user to enter a time in HH:MM format
+    time = input(f'\n{display.color("Enter a time", display.BOLD)} (e.g. 09:30) or {display.color("q", display.BOLD)} to quit: ') # Prompt user to enter a time in HH:MM format
+    if time.strip().lower() in ("q", "quit", "exit"):
+        break
     try:
         # Combine the default date with the user input time to create a datetime object
         combined_input = default_date + ' ' + time
         parsed_datetime = datetime.strptime(combined_input, "%Y-%m-%d %H:%M") # Parse the date and time input into datetime object
     except ValueError:
         # If the time format is incorrect, print error message and allow the user to exit or continue
-        print("")
-        print("Invalid time format. Please enter the time in HH:MM format.")
+        display.error("Invalid time format. Please enter the time in HH:MM format.")
         exit = input('Do you want to exit? ("yes" to exit. Anything else will continue): ') # Ask the user if they want to exit
         print("")
         if exit.lower() == 'yes': # Exit the loop if user types "yes"
@@ -90,26 +95,28 @@ while True:
     # If the datetime input is successfully parsed
     if parsed_datetime:
         # Prompt user for action: view all packages, view one package, or exit
-        answer = input( "1. View all packages at selected time\n"
-                        "2. View one package at selected time\n"
-                        "3. Exit the program\n"
-                        "> ")
+        display.menu([
+            ("1", "View all packages at selected time"),
+            ("2", "View one package at selected time"),
+            ("3", "Exit the program"),
+        ])
+        answer = input("> ")
 
         # Option 1: View all packages at the user selected time
         if answer == '1':
-            print("")
-            print(f"--------Status of all packages at {time}---------") # Print the status header
-            print(f"Truck 1 - departure {truck1.departure_time.time()}")
+            display.section(f"Status of all packages at {time}")
+            print(f"{display.color('Truck 1', display.BOLD)} — departure {display.format_time(truck1.departure_time)}")
             truck1.print_package_status(parsed_datetime) # Print the statuses of all packages for Truck 1 based on user selected time
-            print(f"Truck 2 - departure {truck2.departure_time.time()}")
+            print(f"\n{display.color('Truck 2', display.BOLD)} — departure {display.format_time(truck2.departure_time)}")
             truck2.print_package_status(parsed_datetime) # Print the statuses of all packages for Truck 2 based on user selected time
-            print(f"Truck 3 - departure {truck3.departure_time.time()}")
+            print(f"\n{display.color('Truck 3', display.BOLD)} — departure {display.format_time(truck3.departure_time)}")
             truck3.print_package_status(parsed_datetime) # Print the statuses of all packages for Truck 3 based on user selected time
 
             # Calculate and print the combined total mileage traveled for all trucks up to the user selected time
             total_mileage = truck1.mileage_calculator(parsed_datetime) + truck2.mileage_calculator(
                 parsed_datetime) + truck3.mileage_calculator(parsed_datetime)
-            print("Total mileage: " + str(round(total_mileage, 1))) # Print the rounded total mileage
+            print("")
+            display.mileage_summary(total_mileage) # Print the rounded total mileage
             print("")
 
             # Reset the mileage for each truck after displaying the total mileage
@@ -120,15 +127,13 @@ while True:
 
         # Option 2: View details of a single package by ID at the user selected time
         elif answer == '2':
-            print("")
-            package_id = input('Enter package ID: ') # Prompt user to enter package ID
+            package_id = input('\nEnter package ID: ') # Prompt user to enter package ID
             try:
                 # Check if the package ID exists in the Hub, raise error if not found
                 if not h.contains(package_id):
                     raise ValueError("Package ID not found.")
 
-                print("")
-                print(f"--------Status of package ID#{package_id} at {time}---------") # Print package status header
+                display.section(f"Status of package ID#{package_id} at {time}")
                 truck1.print_package_status(parsed_datetime, package_id) # Check Truck 1 for user selected package and print package status at user selected time if found
                 truck2.print_package_status(parsed_datetime, package_id) # Check Truck 2 for user selected package and print package status at user selected time if found
                 truck3.print_package_status(parsed_datetime, package_id) # Check Truck 3 for user selected package and print package status at user selected time if found
@@ -136,7 +141,8 @@ while True:
                 # Calculate and print the combined total mileage traveled for all trucks up to the user selected time
                 total_mileage = truck1.mileage_calculator(parsed_datetime) + truck2.mileage_calculator(
                 parsed_datetime) + truck3.mileage_calculator(parsed_datetime)
-                print("Total mileage: " + str(round(total_mileage, 1))) # Print rounded total mileage
+                print("")
+                display.mileage_summary(total_mileage) # Print rounded total mileage
                 print("")
 
                 # Reset the mileage for each truck after displaying the total mileage
@@ -145,13 +151,15 @@ while True:
                 truck3.reset_mileage()
             except ValueError as e:
                 # If the package ID is not found, print error message
-                print(str(e))
+                display.error(str(e))
                 print("")
             continue # Loop again for another input
 
         # Option 3: Exit the program
         elif answer == '3':
             break # Exit the loop and end the program
+
+display.info("\nGoodbye!")
 
 
 

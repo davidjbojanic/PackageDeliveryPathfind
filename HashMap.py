@@ -76,3 +76,4 @@ class HashMap:
                 if pair[0] == key:
                     return pair[0]
 
+

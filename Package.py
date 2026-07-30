@@ -22,3 +22,7 @@ class Package:
             f"Status: {self.status}\n"
             f"Dropoff time: {self.dropoff}\n"
         )
+
+    # Method to return a copy of a package
+    def copy(self):
+        return Package(self.id, self.address, self.city, self.zip, self.delivery_deadline, self.weight)
